@@ -67,4 +67,4 @@ res = noise(P*freq) * 2 - 1
 res
 
 # Remapped and mapped to object space cVoronoi example
-![alt text](.imgs/SeExpr_cVoronoi_001.JPG)
+![img](.imgs/SeExpr_cVoronoi_001.JPG)
