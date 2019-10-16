@@ -19,6 +19,7 @@ https://www.disneyanimation.com/technology/seexpr.html
 
 # Examples
 
+
 # You can reference the 8 inputs of the SeExpression by referencing to them as follows
 res = floatInput1;
 res
@@ -28,18 +29,18 @@ res = colorInput1;
 res
 
 # It is also possible to load textures through the SeExpression Node directly, although it is of limited use
+Cell noise from SeExpression node. From surface point position (P) - red = X - green = Y - blue = Z (here generated from camera space)
+You would need to modify the floatInput1 value in order to scale the noise by changing how the cvoronoi function would read the surface point position data
+The norm function normalizes the luminance from what is generated
 
-# Cell noise from SeExpression node. From surface point position (P) - red = X - green = Y - blue = Z (here generated from camera space)
-# You would need to modify the floatInput1 value in order to scale the noise by changing how the cvoronoi function would read the surface point position data
-# The norm function normalizes the luminance from what is generated
 res = P;
 res = cvoronoi(P*floatInput1)*2-1 ;
 res = res*floatInput2;
 res = norm(res);
 res
 
-# By defaut, the P will generate the function, and is in camera space - meaning it won't stick to the object
-#   use instead Pobj
+# By defaut, the P will generate the function, and is in camera space - meaning it won't stick to the object. Use instead Pobj
+
 res = P;
 res = cvoronoi(Pobj*floatInput1)*2-1 ;
 res = res*floatInput2;
@@ -48,17 +49,20 @@ res
 
 
 # Classic noise generation
-# The value should oscillate around 0.5 luminance
+The value should oscillate around 0.5 luminance
+
 res = noise(P*freq)
 res
 
 # Remapped noise
-# The mid value is offsetted according to the new variable (here -0.5)
+The mid value is offsetted according to the new variable (here -0.5)
+
 res = noise(P*freq) - 0.5
 res
 
 # Stretching/scaling the noise
-# The mid value is extended / shrinked  according to the new variable (here 2)
+The mid value is extended / shrinked  according to the new variable (here 2)
+
 res = noise(P*freq) * 2
 res
 
