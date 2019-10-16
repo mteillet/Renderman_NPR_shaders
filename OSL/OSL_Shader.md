@@ -2,4 +2,6 @@
 
 OSL is Open Shading Language
 Need to be compiled before use
-Can be used with a wide variety of applications
+Can be used with a wide variety of applications/platforms
+Faster the SeExpression
+Slower than C++

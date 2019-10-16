@@ -1,0 +1,5 @@
+res = P;
+res = cvoronoi(Pobj*floatInput1)*2-1 ;
+res = res*floatInput2;
+res = norm(res);
+res
