@@ -1,0 +1,13 @@
+# You an reference the 8 inputs of the SeExpression by referencing to them as follows
+res = floatInput1;
+res
+
+# It is possible to plug textures/procedurals into the color inputs of the SeExpression nodes and refer to them later
+res = colorInput1;
+res
+
+# It is also possible to load textures through the SeExpression Node directly, although it is of limited use
+
+# Cell noise from SeExpression node. From surface point position (P) - red = X - green = Y - blue = Z
+res = P;
+res = cvoronoi(floatInput1 * P);
