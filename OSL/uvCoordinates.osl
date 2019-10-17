@@ -1,9 +1,10 @@
 shader read_st(
-    float s = 0,
-    float t = 0,
+    float s = 0 [[int lockgeom = 0]],
+    float t = 0 [[int lockgeom = 0]],
+    float uvRepeat = 1,
     output color resultRGB = color(0)
 )
 
 {
-    resultRGB = color(s,t,1);
+    resultRGB = color(s * uvRepeat, t * uvRepeat, 1);
 }
