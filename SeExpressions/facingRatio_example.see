@@ -1,0 +1,18 @@
+#Node "SE_facingRatio"
+
+#Change value of floatInput1 in order to add contrast to the facing ratio
+# The "?" is actually an if statement. The if else starts from the ":"
+
+# Smoothing the facing ratio, facing Ratio being the minimum, floatInput2 is the max and 1 is the medium value
+
+# Clamp facng ratio between 0 and 1
+
+# A get assigned the colors of colorInput1 and colorInput2 each multiplied by a part of the facingRatio on line 17
+# It sorts of acts as a Ramp. each part using a part of the facing ratio's luminance
+
+cosangle = dot(Vn, Nn);
+facingRatio = cosangle < 0 ? (-pow(-cosangle, floatInput1)) : (pow(cosangle, floatInput1));
+facingRatio = smoothstep(facingRatio, floatInput2, 1);
+facingRatio = clamp(facingRatio, 0, 1);
+A = colorInput1 * (1-facingRatio) + colorInput2 * facingRatio;
+A

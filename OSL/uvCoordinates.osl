@@ -1,0 +1,9 @@
+shader read_st(
+    float s = 0,
+    float t = 0,
+    output color resultRGB = color(0)
+)
+
+{
+    resultRGB = color(s,t,1);
+}

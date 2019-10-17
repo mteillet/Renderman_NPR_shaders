@@ -13,6 +13,7 @@ Based on Disney Animations's open source SeExpr system, giving a scriptable patt
 
 https://rmanwiki.pixar.com/display/REN/PxrSeExpr+Quick+Reference
 https://www.disneyanimation.com/technology/seexpr.html
+http://wdas.github.io/SeExpr/doxygen/userdoc.html
 
 
 
@@ -71,4 +72,7 @@ res = noise(P*freq) * 2 - 1
 res
 
 # Remapped and mapped to object space cVoronoi example
-![](/.imgs/SeExpr_cVoronoi_001.JPG)
+![](/.imgs/SeExpr_001_cVoronoise.JPG)
+
+# Facing Ratio and color inputs mapped to its value example
+![](/.imgs/SeExpr_002_gradedFacingRatio.JPG)
