@@ -1,0 +1,15 @@
+shader RimBubbles (
+    float rim_width = 0.2,
+    color basecolor = color(1,1,1),
+    color rimColor = color(1,0,0),
+    output color resultRGB = 0,
+    output float resultF = 0
+)
+{
+    vector i = normalize(I);
+    vector n = normalize(N);
+    float d = fabs(dot(-i, n));
+    d = smoothstep(rim_width, 1.0, d);
+    resultRGB = mix(rimColor, basecolor, d);
+    resultF = d - 0.5;
+}

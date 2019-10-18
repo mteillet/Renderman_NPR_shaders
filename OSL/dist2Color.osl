@@ -1,0 +1,16 @@
+shader colorDist(
+    float minDistance = 0,
+    float maxDistance = 100.0,
+    color minColor = color(1,0,0),
+    color maxColor = color(0,0,1),
+    string space = "world",
+    output float dist = 0,
+    output float blend = 0,
+    output color resultRGB = color(0)
+)
+{
+    point PP = transform(space, P);
+    dist = distance(PP, point(0,0,0));
+    blend = smoothstep(minDistance, maxDistance, dist);
+    resultRGB = mix(minColor, maxColor, blend);
+}
