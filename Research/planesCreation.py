@@ -2,21 +2,21 @@ import maya.cmds as cmds
 
 ###             Main function               ####
 def main():
-    firstSelection()
-    camList = cameraDirVec(firstSelection)
-    faceNormals = polyNormals(firstSelection)
-    compareVectors(camList, faceNormals)
+    selectionList = firstSelection()
+    print (selectionList)
+    camList = cameraDirVec(selectionList)
+    faceNormals = polyNormals(selectionList)
+    vectorProduct = compareVectors(camList, faceNormals)
 
 ####            Separating the first selection with cam and geo variables                 ####
 def firstSelection():
     selection = cmds.ls(selection = True)
-    cam = selection[0]
-    geo = selection[1]
-    return(cam, geo)
+    return(selection)
+
 
 ####            Getting the camera direction vector             ####
-def cameraDirVec(firstSelection):
-    cmds.select(cam)
+def cameraDirVec(selectionList):
+    cmds.select(selectionList[0])
     invertedCam = cmds.xform(query = True, matrix = True, worldSpace = True)[8:11]
     #Setting variables for the 
     invCount = 0
@@ -29,8 +29,8 @@ def cameraDirVec(firstSelection):
     return (matrixCam)
     
 ####            Getting the normal verctors for all the geo's faces         #### 
-def polyNormals(firstSelection):
-    cmds.select(geo)
+def polyNormals(selectionList):
+    cmds.select(selectionList[1])
     geoNormals = cmds.polyInfo(faceNormals = True)
     #Geo normals cannot be used as it is, as each item returned corresponds to one face and is described as it follows : 
     #       FACE_NORMAL      1: 0.440016 -0.725507 0.529174
@@ -60,19 +60,20 @@ def compareVectors(camList, faceNormals):
     print(camList)
     print(faceNormals[1])
     current = 0
-    comparedVectors = []
     for i in faceNormals:
-        x = camList[0] * float(faceNormals[current][0])
-        y = camList[1] * float(faceNormals[current][1])
-        z = camList[2] * float(faceNormals[current][2])
-        comparedVectors[current].insert(x)
-        comparedVectors[current].insert(y)
-        comparedVectors[current].insert(z)
+        faceNormals[current][0] = camList[0] * float(faceNormals[current][0])
+        faceNormals[current][1] = camList[1] * float(faceNormals[current][1])
+        faceNormals[current][2] = camList[2] * float(faceNormals[current][2])
         current += 1
     print(comparedVectors[1])
+    return(faceNormals)
 
-        
-        
+####        Need to store the face IDs          ####
+# Face IDs and output of compare vectors function will have the same indexes
+# if compared vectors output is close to 0
+# store its corresponding face ID in a new list, in order to be able to select it and create geometry on it
+# need to convert euclidian to degrees for face normals data ?
+
 
 
 if __name__ == '__main__':
