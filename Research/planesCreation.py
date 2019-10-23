@@ -57,13 +57,14 @@ def polyNormals(selectionList):
 
 ####        Comparing all normal vectors to the camera direction vector         ####
 def compareVectors(camList, faceNormals):
-    print(camList)
-    print(faceNormals[1])
+    print float(camList[0])
+    print float(faceNormals[0][0])
     current = 0
     for i in faceNormals:
-        faceNormals[current][0] = camList[0] * float(faceNormals[current][0])
-        faceNormals[current][1] = camList[1] * float(faceNormals[current][1])
-        faceNormals[current][2] = camList[2] * float(faceNormals[current][2])
+        faceNormals[current][0] = float(camList[0]) * float(faceNormals[current][0])
+        faceNormals[current][1] = float(camList[1]) * float(faceNormals[current][1])
+        faceNormals[current][2] = float(camList[2]) * float(faceNormals[current][2])
+        print(current)
         current += 1
     print(comparedVectors[1])
     return(faceNormals)
