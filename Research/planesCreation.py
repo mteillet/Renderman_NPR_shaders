@@ -1,12 +1,19 @@
 import maya.cmds as cmds
+import math
 
 ###             Main function               ####
 def main():
+    # Get the original selection
     selectionList = firstSelection()
-    print (selectionList)
+    # Get the Camera Direction Vector
     camList = cameraDirVec(selectionList)
+    # Get the normal vector of every face in the selected geo
     faceNormals = polyNormals(selectionList)
-    vectorProduct = compareVectors(camList, faceNormals)
+    # Gets Compares the vectors using a threshold and returns a list of ints corresponding to indexes of faces under the threshold
+    faceIndexes = compareVectors(camList, faceNormals)
+    # Selects the faces corresponding to the threshold
+    getFaceMatrices(faceIndexes, selectionList)
+
 
 ####            Separating the first selection with cam and geo variables                 ####
 def firstSelection():
@@ -56,22 +63,43 @@ def polyNormals(selectionList):
     return (sublistGeoNormals)
 
 ####        Comparing all normal vectors to the camera direction vector         ####
+####        Returns a threshold indexes list containing the indexes of the faces corresponding to the threshold         ####
 def compareVectors(camList, faceNormals):
-    print float(camList[0])
-    print float(faceNormals[0][0])
+    print(camList)
+    print(faceNormals[1])
     current = 0
+    productNormal = []
     for i in faceNormals:
-        faceNormals[current][0] = float(camList[0]) * float(faceNormals[current][0])
-        faceNormals[current][1] = float(camList[1]) * float(faceNormals[current][1])
-        faceNormals[current][2] = float(camList[2]) * float(faceNormals[current][2])
-        print(current)
+        x = camList[0] * float(faceNormals[current][0])
+        y = camList[1] * float(faceNormals[current][1])
+        z = camList[2] * float(faceNormals[current][2])
+        productNormal.insert(current, x + y + z)
         current += 1
-    print(comparedVectors[1])
-    return(faceNormals)
+    thresholdIndexes = []
+    threshold = 0.45
+    current = 0
+    for i in productNormal:
+        if math.sqrt((productNormal[current])*(productNormal[current])) < threshold:
+            thresholdIndexes.append(current)
+        current += 1
+    return(thresholdIndexes)
 
-####        Need to store the face IDs          ####
-# Face IDs and output of compare vectors function will have the same indexes
-# if compared vectors output is close to 0
+####    Selects the facing ratio faces according to the threshold and the index set in the comparVectors function
+def getFaceMatrices(faceIndexes, selectionList):
+    cmds.select(selectionList[1])
+    current = 0
+    facingRatio = []
+    print("Processing, wait...")
+    for i in faceIndexes:
+        facingRatio.append(str(selectionList[1]) + ".f[" + str(faceIndexes[current]) + "]")
+        current += 1
+    current = 0
+    print ("creating face, wait...")
+    polyString = ', '.join(map(str, facingRatio))
+    print (polyString) 
+    print (facingRatio[0:-1])
+    cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = 1, keepFacesTogether = False)
+    
 # store its corresponding face ID in a new list, in order to be able to select it and create geometry on it
 # need to convert euclidian to degrees for face normals data ?
 
