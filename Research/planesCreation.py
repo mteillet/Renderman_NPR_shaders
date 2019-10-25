@@ -5,21 +5,30 @@ import math
 def main():
     # Get the original selection
     selectionList = firstSelection()
+    # Duplicate the selection in order to perform stylization on the duplicate
+    newMesh = duplicateMesh(selectionList)
     # Get the Camera Direction Vector
     camList = cameraDirVec(selectionList)
     # Get the normal vector of every face in the selected geo
-    faceNormals = polyNormals(selectionList)
+    faceNormals = polyNormals(newMesh)
     # Gets Compares the vectors using a threshold and returns a list of ints corresponding to indexes of faces under the threshold
     faceIndexes = compareVectors(camList, faceNormals)
     # Selects the faces corresponding to the threshold
-    getFaceMatrices(faceIndexes, selectionList)
+    getFaceMatrices(faceIndexes, newMesh)
 
 
 ####            Separating the first selection with cam and geo variables                 ####
 def firstSelection():
     selection = cmds.ls(selection = True)
+    cmds.select(clear = True)
     return(selection)
 
+####            Makes a copy of the original mesh in order to perform stylization on it
+def duplicateMesh(selectionList):
+    cmds.select(selectionList[1])
+    newMesh = cmds.duplicate()
+    newMesh = cmds.rename(newMesh, "stylisedMesh#")
+    return(newMesh)
 
 ####            Getting the camera direction vector             ####
 def cameraDirVec(selectionList):
@@ -38,10 +47,10 @@ def cameraDirVec(selectionList):
     return (matrixCam)
     
 ####            Getting the normal verctors for all the geo's faces         #### 
-def polyNormals(selectionList):
+def polyNormals(newMesh):
     ####    Variables
     sublistGeoNormals = []
-    cmds.select(selectionList[1])
+    cmds.select(newMesh)
     ####    Function
     geoNormals = cmds.polyInfo(faceNormals = True)
     #Geo normals cannot be used as it is, as each item returned corresponds to one face and is described as it follows : 
@@ -91,17 +100,17 @@ def compareVectors(camList, faceNormals):
     return(thresholdIndexes)
 
 ####    Selects the facing ratio faces according to the threshold and the index set in the comparVectors function
-def getFaceMatrices(faceIndexes, selectionList):
+def getFaceMatrices(faceIndexes, newMesh):
+    cmds.select(newMesh)
     ####    Variables
     translateZ = 1
     rotateZ = 0
     ####    Function
-    cmds.select(selectionList[1])
     current = 0
     facingRatio = []
     print("Processing, wait...")
     for i in faceIndexes:
-        facingRatio.append(str(selectionList[1]) + ".f[" + str(faceIndexes[current]) + "]")
+        facingRatio.append(str(newMesh) + ".f[" + str(faceIndexes[current]) + "]")
         current += 1
     current = 0
     print ("Z faces offset is" + str(translateZ))
@@ -111,10 +120,6 @@ def getFaceMatrices(faceIndexes, selectionList):
     print (polyString) 
     print (facingRatio[0:-1])
     cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = translateZ, keepFacesTogether = False)
-    print ("separating faces, wait...")
-    test = cmds.polySeparate (n='stylizedPiece#')
-    cmds.select(clear = True)
-    cmds.select(test)
 
 #   Try to duplicate original before face creation, after face creation on the new mesh, delete the original face ?
     
