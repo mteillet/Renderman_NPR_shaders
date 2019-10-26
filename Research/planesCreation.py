@@ -162,17 +162,16 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
         facePoly[current]=(str(newMesh) + ".f[" + str(facePoly[current]) + "]")
         current += 1
     current = 0
-    for i in geoNormals:
-        x = float(geoNormals[current][0])
-        y = float(geoNormals[current][1])
-        z = float(geoNormals[current][2])
-        geoNormals[current] = (float(x),float(y),float(z))
-        angleBtw = cmds.angleBetween( v1=geoNormals[current], v2=camList, euler = True )
-        cmds.select(facePoly[current])
-        # Adding to every component the anglebetween the 2 vectors + 90 degress on the Y axis (because it works better), mutiplied by how much they scored in the threshold ratio previously
-        cmds.manipRotateContext( mode = 10, orientObject = facePoly[current], activeHandle=0, rotate = ((angleBtw[0]*(1-math.sqrt(thresoldRatio[current]*thresoldRatio[current]))),((angleBtw[1]+90)*(1-math.sqrt(thresoldRatio[current]*thresoldRatio[current]))),(angleBtw[2]*(1-math.sqrt(thresoldRatio[current]*thresoldRatio[current])))), useManipPivot = True, tweakMode = True)
-        current += 1
-    print(thresoldRatio)
+    cmds.select(facePoly[0])
+    x = float(geoNormals[0][0])
+    y = float(geoNormals[0][1])
+    z = float(geoNormals[0][2])
+    geoNormals[0] = x,y,z
+    test = cmds.angleBetween( euler=True, v1=(geoNormals[0]), v2=(camList) )
+    print(test)
+    # weird result. Might wann try another method for the face
+    # Try to change the rotation offset on the polychipoff command
+
 
     
     
