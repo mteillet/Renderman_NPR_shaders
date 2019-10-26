@@ -15,8 +15,12 @@ def main():
     originalFaces = allPolyReturns[1]
     # Gets Compares the vectors using a threshold and returns a list of ints corresponding to indexes of faces under the threshold
     faceIndexes = compareVectors(camList, faceNormals)
-    # Selects the faces corresponding to the threshold
-    getFaceMatrices(faceIndexes, newMesh, originalFaces)
+    # Selects the faces corresponding to the threshold, duplicates them and deletes the original faces
+    # Offset and scaling is done in this function
+    createFaces(faceIndexes, newMesh, originalFaces)
+    # Orienting the face to the camera direction vector
+    orientFaces(faceNormals, camList)
+    
 
 
 ####            Separating the first selection with cam and geo variables                 ####
@@ -115,11 +119,10 @@ def compareVectors(camList, faceNormals):
     return(thresholdIndexes)
 
 ####    Selects the facing ratio faces according to the threshold and the index set in the comparVectors function
-def getFaceMatrices(faceIndexes, newMesh, originalFaces):
+def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
     translateZ = 1
-    rotate = 90
     scale = 2
     ####    Function
     current = 0
@@ -130,18 +133,34 @@ def getFaceMatrices(faceIndexes, newMesh, originalFaces):
         current += 1
     current = 0
     print ("Z faces offset is" + str(translateZ))
-    print ("Z faces Rotation is" + str(rotate))
     print ("Z faces Scaling is" + str(scale))
     print ("creating faces, wait...")
-    cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = translateZ, keepFacesTogether = False, localRotate = (rotate, rotate, rotate), localScale = (scale, scale, scale))
+    cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = translateZ, keepFacesTogether = False, localScale = (scale, scale, scale))
     # Select the original faces and delete them other wise the script would not work on bigger objects
     cmds.delete(originalFaces)
     cmds.delete(constructionHistory = True)
 
-#   Try to duplicate original before face creation, after face creation on the new mesh, delete the original face ?
+# Use the camera direction vector to orient the planes
+def orientFaces(faceNormals, camList):
+    geoNormals = cmds.polyInfo(faceNormals = True)
+    current = 0
+    for i in geoNormals:
+        geoNormals[current] = geoNormals[current][20:]
+        geoNormals[current] = geoNormals[current].split(" ")
+        current += 1
+    print (geoNormals)
+    current = 0
+    for i in geoNormals:
+        x = float(geoNormals[current][0])
+        y = float(geoNormals[current][1])
+        z = float(geoNormals[current][2])
+        geoNormals[current] = (float(x),float(y),float(z))
+        angleBtw = cmds.angleBetween( v1=geoNormals[current], v2=camList, euler = True )
+        print (angleBtw)
+        current += 1
     
-# store its corresponding face ID in a new list, in order to be able to select it and create geometry on it
 # need to convert euclidian to degrees for face normals data ?
+# Will later need to duplicate all the faces, and orient them using 
 
 
 
