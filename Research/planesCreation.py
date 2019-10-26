@@ -10,11 +10,13 @@ def main():
     # Get the Camera Direction Vector
     camList = cameraDirVec(selectionList)
     # Get the normal vector of every face in the selected geo
-    faceNormals = polyNormals(newMesh)
+    allPolyReturns = polyNormals(newMesh)
+    faceNormals = allPolyReturns[0]
+    originalFaces = allPolyReturns[1]
     # Gets Compares the vectors using a threshold and returns a list of ints corresponding to indexes of faces under the threshold
     faceIndexes = compareVectors(camList, faceNormals)
     # Selects the faces corresponding to the threshold
-    getFaceMatrices(faceIndexes, newMesh)
+    getFaceMatrices(faceIndexes, newMesh, originalFaces)
 
 
 ####            Separating the first selection with cam and geo variables                 ####
@@ -50,6 +52,8 @@ def cameraDirVec(selectionList):
 def polyNormals(newMesh):
     ####    Variables
     sublistGeoNormals = []
+    tempFaces = []
+    originalFaces = []
     cmds.select(newMesh)
     ####    Function
     geoNormals = cmds.polyInfo(faceNormals = True)
@@ -62,7 +66,18 @@ def polyNormals(newMesh):
     #And THEN split every item in a sublist, separated by the remaining spaces
     #       [0.440016,-0.725507,0.529174]
     #       [0.062810,0.989723,0.128464]
+    #The first part of each string is also stored in the originalFaces variable, so that they can be deleted later on
     nbNormals = len(geoNormals)-1
+    counter = 0
+    for i in geoNormals:
+        string = geoNormals[counter]
+        tempFaces.insert(counter, string[:20])
+        originalFaces.insert(counter, filter(type(tempFaces[counter]).isdigit, tempFaces[counter]))
+        counter += 1
+    counter = 0
+    for i in originalFaces:
+        originalFaces[counter]=(str(newMesh) + ".f[" + str(originalFaces[counter]) + "]")
+        counter += 1
     counter = 0
     while counter < nbNormals:
         # storing the geo normal string to a temporal variable
@@ -73,7 +88,7 @@ def polyNormals(newMesh):
         sublistGeoNormals.insert(counter, geoNormals[counter].split(" "))
         counter += 1
     #Refer to sublistGeoNormals to see the new obtained list of sublists
-    return (sublistGeoNormals)
+    return (sublistGeoNormals, originalFaces)
 
 ####        Comparing all normal vectors to the camera direction vector         ####
 ####        Returns a threshold indexes list containing the indexes of the faces corresponding to the threshold         ####
@@ -100,11 +115,12 @@ def compareVectors(camList, faceNormals):
     return(thresholdIndexes)
 
 ####    Selects the facing ratio faces according to the threshold and the index set in the comparVectors function
-def getFaceMatrices(faceIndexes, newMesh):
+def getFaceMatrices(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
     translateZ = 1
-    rotateZ = 0
+    rotate = 90
+    scale = 2
     ####    Function
     current = 0
     facingRatio = []
@@ -114,12 +130,13 @@ def getFaceMatrices(faceIndexes, newMesh):
         current += 1
     current = 0
     print ("Z faces offset is" + str(translateZ))
-    print ("Z faces Rotation is" + str(rotateZ))
+    print ("Z faces Rotation is" + str(rotate))
+    print ("Z faces Scaling is" + str(scale))
     print ("creating faces, wait...")
-    polyString = ', '.join(map(str, facingRatio))
-    print (polyString) 
-    print (facingRatio[0:-1])
-    cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = translateZ, keepFacesTogether = False)
+    cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = translateZ, keepFacesTogether = False, localRotate = (rotate, rotate, rotate), localScale = (scale, scale, scale))
+    # Select the original faces and delete them other wise the script would not work on bigger objects
+    cmds.delete(originalFaces)
+    cmds.delete(constructionHistory = True)
 
 #   Try to duplicate original before face creation, after face creation on the new mesh, delete the original face ?
     
