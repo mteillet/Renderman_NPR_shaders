@@ -100,7 +100,7 @@ def polyNormals(newMesh):
 ####        Returns a threshold indexes list containing the indexes of the faces corresponding to the threshold         ####
 def compareVectors(camList, faceNormals):
     ####    Variables
-    threshold = 0.45
+    threshold = 1
     productNormal = []
     thresholdPercentage = []
     
@@ -128,7 +128,7 @@ def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
     translateZ = 1
-    scale = 2
+    scale = 1.25
     ####    Function
     current = 0
     facingRatio = []
@@ -147,40 +147,45 @@ def createFaces(faceIndexes, newMesh, originalFaces):
 
 # Use the camera direction vector to orient the planes
 def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
+    angleBetweenVectors = []
     geoNormals = cmds.polyInfo(faceNormals = True)
     facePoly = cmds.polyInfo(faceNormals = True)
     print(facePoly)
+    # Inverting the Z axis of the Camera direction vector
+    camList[2] = -(camList[2])
     current = 0
+    # Getting the normal of each face
     for i in geoNormals:
         geoNormals[current] = geoNormals[current][20:]
         geoNormals[current] = geoNormals[current].split(" ")
         current += 1
+    # Getting the face ID for ever face
     current = 0
     for i in facePoly:
         tempString = facePoly[current][:20]
         facePoly[current] = filter(type(tempString).isdigit, tempString)
         facePoly[current]=(str(newMesh) + ".f[" + str(facePoly[current]) + "]")
         current += 1
+    # Rotating all the faces according to the difference between normal and camera vectors
+    # Still a bit slow, would be better to find a more efficient way to make this operation
+    print("setting face rotation, wait...")
     current = 0
-    for i in geoNormals:
+    print(thresoldRatio)
+    for i in facePoly:
+        cmds.select(facePoly[current])
         x = float(geoNormals[current][0])
         y = float(geoNormals[current][1])
         z = float(geoNormals[current][2])
-        geoNormals[current] = (float(x),float(y),float(z))
-        angleBtw = cmds.angleBetween( v1=geoNormals[current], v2=camList, euler = True )
-        cmds.select(facePoly[current])
-        # Adding to every component the anglebetween the 2 vectors + 90 degress on the Y axis (because it works better), mutiplied by how much they scored in the threshold ratio previously
-        cmds.manipRotateContext( mode = 10, orientObject = facePoly[current], activeHandle=0, rotate = ((angleBtw[0]*(1-math.sqrt(thresoldRatio[current]*thresoldRatio[current]))),((angleBtw[1]+90)*(1-math.sqrt(thresoldRatio[current]*thresoldRatio[current]))),(angleBtw[2]*(1-math.sqrt(thresoldRatio[current]*thresoldRatio[current])))), useManipPivot = True, tweakMode = True)
+        geoNormals[current] = x,y,z
+        
+        angleBetweenVectors.append((cmds.angleBetween( euler=True, v1=(geoNormals[current]), v2=(camList))))
+        cmds.manipRotateContext( mode = 9, orientObject = facePoly[current], activeHandle=0, rotate = (((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current])))*(angleBetweenVectors[current][1]), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2]))), useManipPivot = True, tweakMode = False)
         current += 1
-    print(thresoldRatio)
+    cmds.select(clear = True)
+    cmds.delete(newMesh)
+    cmds.undo()
 
-    
-    
-    
-# need to convert euclidian to degrees for face normals data ?
-# Will later need to duplicate all the faces, and orient them using 
-
-
+# Need to make the Z offset depending on the threshold Ratio
 
 if __name__ == '__main__':
     main()
