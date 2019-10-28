@@ -24,6 +24,8 @@ def main():
     facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
     # Scaling the UV shells
     scaleUVs(facePoly)
+    # Duplicating the currently assigned shader
+    duplicateShader(newMesh)
     
 
 
@@ -179,7 +181,6 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
         y = float(geoNormals[current][1])
         z = float(geoNormals[current][2])
         geoNormals[current] = x,y,z
-        
         angleBetweenVectors.append((cmds.angleBetween( euler=True, v1=(geoNormals[current]), v2=(camList))))
         cmds.manipRotateContext( mode = 9, orientObject = facePoly[current], activeHandle=0, rotate = (((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current])))*(angleBetweenVectors[current][1]), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2]))), useManipPivot = True, tweakMode = False)
         current += 1
@@ -198,7 +199,17 @@ def scaleUVs(facePoly):
         ptPivotV = (( pivots[1] + pivots[3] + pivots[5] + pivots[7] ) / 4 )
         cmds.polyEditUV(scaleU = 0.1, scaleV = 0.1, pivotU = ptPivotU, pivotV = ptPivotV)
         current += 1
-# Need to make the Z offset depending on the threshold Ratio
+
+def duplicateShader(newMesh):
+    cmds.select(newMesh)
+    # Get the shader currently applied
+    cmds.hyperShade("",smn = True)
+    hypershade = cmds.ls(sl = True)
+    # Hypershade 0 = PxrSurface
+    print (hypershade[0])
+    # Now need to move to the shading group
+
+
 
 if __name__ == '__main__':
     main()
