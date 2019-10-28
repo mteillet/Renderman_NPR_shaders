@@ -14,9 +14,17 @@ def main():
     faceNormals = allPolyReturns[0]
     originalFaces = allPolyReturns[1]
     # Gets Compares the vectors using a threshold and returns a list of ints corresponding to indexes of faces under the threshold
-    faceIndexes = compareVectors(camList, faceNormals)
-    # Selects the faces corresponding to the threshold
-    getFaceMatrices(faceIndexes, newMesh, originalFaces)
+    returnVectors = compareVectors(camList, faceNormals)
+    faceIndexes = returnVectors[0]
+    thresoldRatio = returnVectors[1]
+    # Selects the faces corresponding to the threshold, duplicates them and deletes the original faces
+    # Offset and scaling is done in this function
+    createFaces(faceIndexes, newMesh, originalFaces)
+    # Orienting the face to the camera direction vector
+    facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
+    # Scaling the UV shells
+    scaleUVs(facePoly)
+    
 
 
 ####            Separating the first selection with cam and geo variables                 ####
@@ -94,8 +102,10 @@ def polyNormals(newMesh):
 ####        Returns a threshold indexes list containing the indexes of the faces corresponding to the threshold         ####
 def compareVectors(camList, faceNormals):
     ####    Variables
-    threshold = 0.45
+    threshold = 1
     productNormal = []
+    thresholdPercentage = []
+    
     ####    Function
     print(camList)
     print(faceNormals[1])
@@ -111,16 +121,16 @@ def compareVectors(camList, faceNormals):
     for i in productNormal:
         if math.sqrt((productNormal[current])*(productNormal[current])) < threshold:
             thresholdIndexes.append(current)
+            thresholdPercentage.append(productNormal[current])
         current += 1
-    return(thresholdIndexes)
+    return(thresholdIndexes, thresholdPercentage)
 
 ####    Selects the facing ratio faces according to the threshold and the index set in the comparVectors function
-def getFaceMatrices(faceIndexes, newMesh, originalFaces):
+def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
     translateZ = 1
-    rotate = 90
-    scale = 2
+    scale = 1.25
     ####    Function
     current = 0
     facingRatio = []
@@ -130,20 +140,65 @@ def getFaceMatrices(faceIndexes, newMesh, originalFaces):
         current += 1
     current = 0
     print ("Z faces offset is" + str(translateZ))
-    print ("Z faces Rotation is" + str(rotate))
     print ("Z faces Scaling is" + str(scale))
     print ("creating faces, wait...")
-    cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = translateZ, keepFacesTogether = False, localRotate = (rotate, rotate, rotate), localScale = (scale, scale, scale))
+    cmds.polyChipOff( facingRatio[0:-1], duplicate = True, localTranslateZ = translateZ, keepFacesTogether = False, localScale = (scale, scale, scale))
     # Select the original faces and delete them other wise the script would not work on bigger objects
     cmds.delete(originalFaces)
     cmds.delete(constructionHistory = True)
 
-#   Try to duplicate original before face creation, after face creation on the new mesh, delete the original face ?
-    
-# store its corresponding face ID in a new list, in order to be able to select it and create geometry on it
-# need to convert euclidian to degrees for face normals data ?
+# Use the camera direction vector to orient the planes
+def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
+    angleBetweenVectors = []
+    geoNormals = cmds.polyInfo(faceNormals = True)
+    facePoly = cmds.polyInfo(faceNormals = True)
+    print(facePoly)
+    # Inverting the Z axis of the Camera direction vector
+    camList[2] = -(camList[2])
+    current = 0
+    # Getting the normal of each face
+    for i in geoNormals:
+        geoNormals[current] = geoNormals[current][20:]
+        geoNormals[current] = geoNormals[current].split(" ")
+        current += 1
+    # Getting the face ID for ever face
+    current = 0
+    for i in facePoly:
+        tempString = facePoly[current][:20]
+        facePoly[current] = filter(type(tempString).isdigit, tempString)
+        facePoly[current]=(str(newMesh) + ".f[" + str(facePoly[current]) + "]")
+        current += 1
+    # Rotating all the faces according to the difference between normal and camera vectors
+    # Still a bit slow, would be better to find a more efficient way to make this operation
+    print("setting face rotation, wait...")
+    current = 0
+    print(thresoldRatio)
+    for i in facePoly:
+        cmds.select(facePoly[current])
+        x = float(geoNormals[current][0])
+        y = float(geoNormals[current][1])
+        z = float(geoNormals[current][2])
+        geoNormals[current] = x,y,z
+        
+        angleBetweenVectors.append((cmds.angleBetween( euler=True, v1=(geoNormals[current]), v2=(camList))))
+        cmds.manipRotateContext( mode = 9, orientObject = facePoly[current], activeHandle=0, rotate = (((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current])))*(angleBetweenVectors[current][1]), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2]))), useManipPivot = True, tweakMode = False)
+        current += 1
+    cmds.select(clear = True)
+    cmds.delete(newMesh)
+    cmds.undo()
+    return(facePoly)
 
-
+def scaleUVs(facePoly):
+    current = 0
+    for i in facePoly:
+        cmds.select(facePoly[current])
+        cmds.select(cmds.polyListComponentConversion(tuv = True), r = True)
+        pivots = cmds.polyEditUV( query=True )
+        ptPivotU = (( pivots[0] + pivots[2] + pivots[4] + pivots[6] ) / 4 )
+        ptPivotV = (( pivots[1] + pivots[3] + pivots[5] + pivots[7] ) / 4 )
+        cmds.polyEditUV(scaleU = 0.1, scaleV = 0.1, pivotU = ptPivotU, pivotV = ptPivotV)
+        current += 1
+# Need to make the Z offset depending on the threshold Ratio
 
 if __name__ == '__main__':
     main()
