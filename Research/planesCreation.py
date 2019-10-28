@@ -172,14 +172,13 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     # Still a bit slow, would be better to find a more efficient way to make this operation
     print("setting face rotation, wait...")
     current = 0
-    print(thresoldRatio)
+    # Need to hide the output from these calcultations in order to speedUp the following proccess
     for i in facePoly:
         cmds.select(facePoly[current])
         x = float(geoNormals[current][0])
         y = float(geoNormals[current][1])
         z = float(geoNormals[current][2])
         geoNormals[current] = x,y,z
-        
         angleBetweenVectors.append((cmds.angleBetween( euler=True, v1=(geoNormals[current]), v2=(camList))))
         cmds.manipRotateContext( mode = 9, orientObject = facePoly[current], activeHandle=0, rotate = (((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current])))*(angleBetweenVectors[current][1]), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2]))), useManipPivot = True, tweakMode = False)
         current += 1
