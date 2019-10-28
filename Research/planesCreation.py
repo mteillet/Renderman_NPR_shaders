@@ -21,7 +21,9 @@ def main():
     # Offset and scaling is done in this function
     createFaces(faceIndexes, newMesh, originalFaces)
     # Orienting the face to the camera direction vector
-    orientFaces(faceNormals, camList, newMesh, thresoldRatio)
+    facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
+    # Scaling the UV shells
+    scaleUVs(facePoly)
     
 
 
@@ -184,7 +186,18 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     cmds.select(clear = True)
     cmds.delete(newMesh)
     cmds.undo()
+    return(facePoly)
 
+def scaleUVs(facePoly):
+    current = 0
+    for i in facePoly:
+        cmds.select(facePoly[current])
+        cmds.select(cmds.polyListComponentConversion(tuv = True), r = True)
+        pivots = cmds.polyEditUV( query=True )
+        ptPivotU = (( pivots[0] + pivots[2] + pivots[4] + pivots[6] ) / 4 )
+        ptPivotV = (( pivots[1] + pivots[3] + pivots[5] + pivots[7] ) / 4 )
+        cmds.polyEditUV(scaleU = 0.1, scaleV = 0.1, pivotU = ptPivotU, pivotV = ptPivotV)
+        current += 1
 # Need to make the Z offset depending on the threshold Ratio
 
 if __name__ == '__main__':
