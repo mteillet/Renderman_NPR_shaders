@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 import math
+import pymel.core as pm
 
 ###             Main function               ####
 def main():
@@ -203,13 +204,16 @@ def scaleUVs(facePoly):
 def duplicateShader(newMesh):
     cmds.select(newMesh)
     # Get the shader currently applied
-    cmds.hyperShade("",smn = True)
-    hypershade = cmds.ls(sl = True)
-    # Hypershade 0 = PxrSurface
-    print (hypershade[0])
-    # Now need to move to the shading group
-
-
+    originalShader = cmds.listConnections(cmds.listHistory(newMesh), type = 'shadingEngine')
+    cmds.select(originalShader)
+    newShader = pm.duplicate(originalShader, un=True)
+    cmds.select(newShader)
+    # Setting new string for new shading nodes name
+    # Need loop
+    
+    newSTR = ((str(newShader[0])) + "_BITE")
+    print(newSTR)
+    cmds.rename(str(newShader[0]), str(newSTR))
 
 if __name__ == '__main__':
     main()
