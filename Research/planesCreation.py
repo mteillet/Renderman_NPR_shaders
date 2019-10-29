@@ -131,8 +131,8 @@ def compareVectors(camList, faceNormals):
 def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
-    translateZ = 1
-    scale = 1.25
+    translateZ = .25
+    scale = 1.5
     ####    Function
     current = 0
     facingRatio = []
