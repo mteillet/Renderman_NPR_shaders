@@ -1,6 +1,7 @@
 import maya.cmds as cmds
 import math
 import pymel.core as pm
+import maya.mel as mel
 
 ###             Main function               ####
 def main():
@@ -26,7 +27,10 @@ def main():
     # Scaling the UV shells
     scaleUVs(facePoly)
     # Duplicating the currently assigned shader
-    duplicateShader(newMesh)
+    stylizedShadingGroup = duplicateShader(newMesh)
+    # Creating the stylized PxrOSL Node
+    setUpOSL(stylizedShadingGroup)
+
     
 
 
@@ -190,6 +194,7 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     cmds.undo()
     return(facePoly)
 
+# Scalin UV shells of the new mesh in order to get as few colors as possible in the albedo
 def scaleUVs(facePoly):
     current = 0
     for i in facePoly:
@@ -201,6 +206,7 @@ def scaleUVs(facePoly):
         cmds.polyEditUV(scaleU = 0.1, scaleV = 0.1, pivotU = ptPivotU, pivotV = ptPivotV)
         current += 1
 
+# Duplicating, renaming and assigning the new shader to the stylized mesh
 def duplicateShader(newMesh):
     cmds.select(newMesh)
     # Get the shader currently applied
@@ -208,12 +214,21 @@ def duplicateShader(newMesh):
     cmds.select(originalShader)
     newShader = pm.duplicate(originalShader, un=True)
     cmds.select(newShader)
-    # Setting new string for new shading nodes name
-    # Need loop
-    
-    newSTR = ((str(newShader[0])) + "_BITE")
-    print(newSTR)
-    cmds.rename(str(newShader[0]), str(newSTR))
+    # Setting new string for new shading group and PxrSurface name
+    newShadgingGroup = ((str(newShader[0])) + "_STYLIZED")
+    newPxrSurface = ((str(newShader[3])) + "_STYLIZED")
+    stylizedShadingGroup = cmds.rename(str(newShader[0]), str(newShadgingGroup))
+    stylizedPxrSurface = cmds.rename(str(newShader[3]), str(newPxrSurface))
+    cmds.select(newMesh)
+    cmds.hyperShade(assign = (stylizedPxrSurface))
+    return (stylizedPxrSurface, stylizedShadingGroup)
+
+# Creating the OSL node and compiling it using the .osl in the document/maya/scripts directory
+# Then linking the outputRGBR to the presence of the new stylized duplicated shader
+def setUpOSL(stylizedShadingGroup):
+    newNode = mel.eval('hyperShadePanelCreate "otherTexture" PxrOSL;')
+    oslNode = cmds.rename(str(newNode), "stylizedOSL_#")
+    # Now need to create the actual osl shader, and compile it as an oso, in order to compile it into the node before plugin it into the PxrSurface
 
 if __name__ == '__main__':
     main()
