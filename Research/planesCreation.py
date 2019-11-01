@@ -227,8 +227,18 @@ def scaleUVs(facePoly):
         cmds.select(facePoly[current])
         cmds.select(cmds.polyListComponentConversion(tuv = True), r = True)
         pivots = cmds.polyEditUV( query=True )
-        ptPivotU = (( pivots[0] + pivots[2] + pivots[4] + pivots[6] ) / 4 )
-        ptPivotV = (( pivots[1] + pivots[3] + pivots[5] + pivots[7] ) / 4 )
+        # Storing the odd and even (U and V) indexes in two different lists
+        Ucoord = pivots[0::2]
+        Vcoord = pivots[1::2]
+        ptPivotU = 0
+        ptPivotV = 0
+        counter = 0
+        for i in Ucoord:
+            ptPivotU += Ucoord[counter]
+            ptPivotV += Vcoord[counter]
+            counter += 1
+        ptPivotU /= len(Ucoord)
+        ptPivotV /= len(Vcoord)
         cmds.polyEditUV(scaleU = 0.1, scaleV = 0.1, pivotU = ptPivotU, pivotV = ptPivotV)
         current += 1
 
