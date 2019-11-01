@@ -142,7 +142,7 @@ def compareVectors(camList, faceNormals):
 def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
-    translateZ = .25
+    translateZ = 0
     scale = 1.5
     ####    Function
     current = 0
@@ -178,6 +178,7 @@ def getCenterOfFace(facePoly, current):
 
 # Use the camera direction vector to orient the planes
 def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
+    faceTranslate = 0.1
     angleBetweenVectors = []
     geoNormals = cmds.polyInfo(faceNormals = True)
     facePoly = cmds.polyInfo(faceNormals = True)
@@ -204,6 +205,8 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     # Need to hide the output from these calcultations in order to speedUp the following proccess
     for i in facePoly:
         cmds.select(facePoly[current])
+        # Moving the faces
+        cmds.move(((1 - abs(thresoldRatio[current]))*faceTranslate), 0, 0, facePoly[current], relative = True, componentSpace = True)
         # Get the center of the face
         faceCenter = getCenterOfFace(facePoly, current)
         # Determining the normal axis of the faces
@@ -213,6 +216,7 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
         geoNormals[current] = x,y,z
         # Finding the angle between all the faces
         angleBetweenVectors.append((cmds.angleBetween( euler=True, v1=(geoNormals[current]), v2=(camList))))
+        # Rotation of the faces
         cmds.rotate(((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][1])), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2])), facePoly[current], pivot=faceCenter)
         current += 1
     #cmds.select(clear = True)
