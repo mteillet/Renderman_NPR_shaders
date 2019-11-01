@@ -229,6 +229,7 @@ def setUpOSL(stylizedShadingGroup):
     newNode = mel.eval('hyperShadePanelCreate "otherTexture" PxrOSL;')
     oslNode = cmds.rename(str(newNode), "stylizedOSL_#")
     # Now need to create the actual osl shader, and compile it as an oso, in order to compile it into the node before plugin it into the PxrSurface
+    # Might need a new UV map layer and use a Unitize UV (in UV>Modify Menu)
 
 if __name__ == '__main__':
     main()
