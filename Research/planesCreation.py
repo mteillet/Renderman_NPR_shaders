@@ -1,7 +1,15 @@
 import maya.cmds as cmds
 import math
+import pymel.core as pm
+import maya.mel as mel
 
-###             Main function               ####
+####    Script made and owned by Teillet Martin    ####
+####    Special thanks to :
+#               - proxe (HardOps and BoxCutter developper) for his help with matrices
+#               - Tony Kaap (Autodesk Developper) for his help regarding the manipRotateContext issues
+
+
+####             Main function               ####
 def main():
     # Get the original selection
     selectionList = firstSelection()
@@ -24,6 +32,11 @@ def main():
     facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
     # Scaling the UV shells
     scaleUVs(facePoly)
+    # Duplicating the currently assigned shader
+    stylizedShadingGroup = duplicateShader(newMesh)
+    # Creating the stylized PxrOSL Node
+    setUpOSL(stylizedShadingGroup)
+
     
 
 
@@ -129,8 +142,8 @@ def compareVectors(camList, faceNormals):
 def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
-    translateZ = 1
-    scale = 1.25
+    translateZ = .25
+    scale = 1.5
     ####    Function
     current = 0
     facingRatio = []
@@ -146,6 +159,22 @@ def createFaces(faceIndexes, newMesh, originalFaces):
     # Select the original faces and delete them other wise the script would not work on bigger objects
     cmds.delete(originalFaces)
     cmds.delete(constructionHistory = True)
+
+# Based on Tony Kaap's input
+def getCenterOfFace(facePoly, current):
+    facePts = cmds.xform(facePoly[current],q=1,t=1,ws=1)
+    numPts = len(facePts) / 3
+    center = [0]*3
+    for pt in xrange(numPts):
+        center[0] += facePts[pt*3]
+        center[1] += facePts[pt*3+1]
+        center[2] += facePts[pt*3+2]
+    invNumPts = 1.0/numPts
+    center[0] *= invNumPts
+    center[1] *= invNumPts
+    center[2] *= invNumPts
+
+    return center
 
 # Use the camera direction vector to orient the planes
 def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
@@ -175,18 +204,23 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     # Need to hide the output from these calcultations in order to speedUp the following proccess
     for i in facePoly:
         cmds.select(facePoly[current])
+        # Get the center of the face
+        faceCenter = getCenterOfFace(facePoly, current)
+        # Determining the normal axis of the faces
         x = float(geoNormals[current][0])
         y = float(geoNormals[current][1])
         z = float(geoNormals[current][2])
         geoNormals[current] = x,y,z
+        # Finding the angle between all the faces
         angleBetweenVectors.append((cmds.angleBetween( euler=True, v1=(geoNormals[current]), v2=(camList))))
-        cmds.manipRotateContext( mode = 9, orientObject = facePoly[current], activeHandle=0, rotate = (((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current])))*(angleBetweenVectors[current][1]), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2]))), useManipPivot = True, tweakMode = False)
+        cmds.rotate(((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][1])), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2])), facePoly[current], pivot=faceCenter)
         current += 1
-    cmds.select(clear = True)
-    cmds.delete(newMesh)
-    cmds.undo()
+    #cmds.select(clear = True)
+    #cmds.delete(newMesh)
+    #cmds.undo()
     return(facePoly)
 
+# Scalin UV shells of the new mesh in order to get as few colors as possible in the albedo
 def scaleUVs(facePoly):
     current = 0
     for i in facePoly:
@@ -197,7 +231,31 @@ def scaleUVs(facePoly):
         ptPivotV = (( pivots[1] + pivots[3] + pivots[5] + pivots[7] ) / 4 )
         cmds.polyEditUV(scaleU = 0.1, scaleV = 0.1, pivotU = ptPivotU, pivotV = ptPivotV)
         current += 1
-# Need to make the Z offset depending on the threshold Ratio
+
+# Duplicating, renaming and assigning the new shader to the stylized mesh
+def duplicateShader(newMesh):
+    cmds.select(newMesh)
+    # Get the shader currently applied
+    originalShader = cmds.listConnections(cmds.listHistory(newMesh), type = 'shadingEngine')
+    cmds.select(originalShader)
+    newShader = pm.duplicate(originalShader, un=True)
+    cmds.select(newShader)
+    # Setting new string for new shading group and PxrSurface name
+    newShadgingGroup = ((str(newShader[0])) + "_STYLIZED")
+    newPxrSurface = ((str(newShader[3])) + "_STYLIZED")
+    stylizedShadingGroup = cmds.rename(str(newShader[0]), str(newShadgingGroup))
+    stylizedPxrSurface = cmds.rename(str(newShader[3]), str(newPxrSurface))
+    cmds.select(newMesh)
+    cmds.hyperShade(assign = (stylizedPxrSurface))
+    return (stylizedPxrSurface, stylizedShadingGroup)
+
+# Creating the OSL node and compiling it using the .osl in the document/maya/scripts directory
+# Then linking the outputRGBR to the presence of the new stylized duplicated shader
+def setUpOSL(stylizedShadingGroup):
+    newNode = mel.eval('hyperShadePanelCreate "otherTexture" PxrOSL;')
+    oslNode = cmds.rename(str(newNode), "stylizedOSL_#")
+    # Now need to create the actual osl shader, and compile it as an oso, in order to compile it into the node before plugin it into the PxrSurface
+    # Might need a new UV map layer and use a Unitize UV (in UV>Modify Menu)
 
 if __name__ == '__main__':
     main()
