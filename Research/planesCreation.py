@@ -3,7 +3,13 @@ import math
 import pymel.core as pm
 import maya.mel as mel
 
-###             Main function               ####
+####    Script made and owned by Teillet Martin    ####
+####    Special thanks to :
+#               - proxe (HardOps and BoxCutter developper) for his help with matrices
+#               - Tony Kaap (Autodesk Developper) for his help regarding the manipRotateContext issues
+
+
+####             Main function               ####
 def main():
     # Get the original selection
     selectionList = firstSelection()
@@ -154,6 +160,22 @@ def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.delete(originalFaces)
     cmds.delete(constructionHistory = True)
 
+# Based on Tony Kaap's input
+def getCenterOfFace(facePoly, current):
+    facePts = cmds.xform(facePoly[current],q=1,t=1,ws=1)
+    numPts = len(facePts) / 3
+    center = [0]*3
+    for pt in xrange(numPts):
+        center[0] += facePts[pt*3]
+        center[1] += facePts[pt*3+1]
+        center[2] += facePts[pt*3+2]
+    invNumPts = 1.0/numPts
+    center[0] *= invNumPts
+    center[1] *= invNumPts
+    center[2] *= invNumPts
+
+    return center
+
 # Use the camera direction vector to orient the planes
 def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     angleBetweenVectors = []
@@ -182,16 +204,20 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     print(thresoldRatio)
     for i in facePoly:
         cmds.select(facePoly[current])
+        # Get the center of the face
+        faceCenter = getCenterOfFace(facePoly, current)
+        # Determining the normal axis of the faces
         x = float(geoNormals[current][0])
         y = float(geoNormals[current][1])
         z = float(geoNormals[current][2])
         geoNormals[current] = x,y,z
+        # Finding the angle between all the faces
         angleBetweenVectors.append((cmds.angleBetween( euler=True, v1=(geoNormals[current]), v2=(camList))))
-        cmds.manipRotateContext( mode = 9, orientObject = facePoly[current], activeHandle=0, rotate = (((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current])))*(angleBetweenVectors[current][1]), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2]))), useManipPivot = True, tweakMode = False)
+        cmds.rotate(((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][0])), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][1])), ((1 - abs(thresoldRatio[current]))*(angleBetweenVectors[current][2])), facePoly[current], pivot=faceCenter)
         current += 1
-    cmds.select(clear = True)
-    cmds.delete(newMesh)
-    cmds.undo()
+    #cmds.select(clear = True)
+    #cmds.delete(newMesh)
+    #cmds.undo()
     return(facePoly)
 
 # Scalin UV shells of the new mesh in order to get as few colors as possible in the albedo
