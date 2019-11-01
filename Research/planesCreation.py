@@ -201,7 +201,7 @@ def orientFaces(faceNormals, camList, newMesh, thresoldRatio):
     # Still a bit slow, would be better to find a more efficient way to make this operation
     print("setting face rotation, wait...")
     current = 0
-    print(thresoldRatio)
+    # Need to hide the output from these calcultations in order to speedUp the following proccess
     for i in facePoly:
         cmds.select(facePoly[current])
         # Get the center of the face
