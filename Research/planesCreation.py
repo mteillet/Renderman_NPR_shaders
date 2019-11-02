@@ -32,6 +32,8 @@ def main():
     facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
     # Scaling the UV shells
     scaleUVs(facePoly)
+    # Creating a new UVset
+    newUVset(facePoly, newMesh)
     # Duplicating the currently assigned shader
     stylizedShadingGroup = duplicateShader(newMesh)
     # Creating the stylized PxrOSL Node
@@ -258,6 +260,15 @@ def duplicateShader(newMesh):
     cmds.select(newMesh)
     cmds.hyperShade(assign = (stylizedPxrSurface))
     return (stylizedPxrSurface, stylizedShadingGroup)
+
+def newUVset(facePoly, newMesh):
+    newUVset = "stylizedUvSet"
+    cmds.select(newMesh)
+    originalUvSet = cmds.polyUVSet(newMesh, query = True, allUVSets = True)
+    cmds.polyUVSet( copy = True, nuv = newUVset, uvSet = originalUvSet[0] )
+    cmds.polyUVSet( currentUVSet = True,  uvSet = newUVset)
+    cmds.select(facePoly)
+    cmds.polyForceUV( unitize = True )
 
 # Creating the OSL node and compiling it using the .osl in the document/maya/scripts directory
 # Then linking the outputRGBR to the presence of the new stylized duplicated shader
