@@ -2,6 +2,7 @@ import maya.cmds as cmds
 import math
 import pymel.core as pm
 import maya.mel as mel
+import rfm2
 
 ####    Script made and owned by Teillet Martin    ####
 ####    Special thanks to :
@@ -37,7 +38,7 @@ def main():
     # Duplicating the currently assigned shader
     stylizedShadingGroup = duplicateShader(newMesh)
     # Creating the stylized PxrOSL Node
-    setUpOSL(stylizedShadingGroup)
+    setUpOSL(stylizedShadingGroup, newMesh)
 
     
 
@@ -277,11 +278,16 @@ def newUVset(facePoly, newMesh):
 
 # Creating the OSL node and compiling it using the .osl in the document/maya/scripts directory
 # Then linking the outputRGBR to the presence of the new stylized duplicated shader
-def setUpOSL(stylizedShadingGroup):
-    newNode = mel.eval('hyperShadePanelCreate "otherTexture" PxrOSL;')
-    oslNode = cmds.rename(str(newNode), "stylizedOSL_#")
-    # Now need to create the actual osl shader, and compile it as an oso, in order to compile it into the node before plugin it into the PxrSurface
-    # Might need a new UV map layer and use a Unitize UV (in UV>Modify Menu)
+def setUpOSL(stylizedShadingGroup, newMesh):
+    # Creating new PxrTexture and PxrManifold2D nodes
+    # Bug - original shading group duplicating, but not the shader itself
+    newPxrTexture = rfm2.api.nodes.create_node("","PxrTexture")
+    newManifold = rfm2.api.nodes.create_node("","PxrManifold2D")
+    # Connecting the manifold to the PxrTexture and the UVset[1] name to the PxrMAnifold.primvarS/T
+    #cmds.connectAttr(((newManifold)+".result"), ((newPxrTexture)+".manifold"))
+    #cmds.connectAttr((str(newMesh)".uvSet[1].uvSetName"), (str(newManifold)+".primvarT"))
 
+    
+    
 if __name__ == '__main__':
     main()
