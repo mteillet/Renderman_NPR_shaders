@@ -32,6 +32,8 @@ def main():
     facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
     # Scaling the UV shells
     scaleUVs(facePoly)
+    # Creating a new UVset
+    newUVset(facePoly, newMesh)
     # Duplicating the currently assigned shader
     stylizedShadingGroup = duplicateShader(newMesh)
     # Creating the stylized PxrOSL Node
@@ -227,8 +229,18 @@ def scaleUVs(facePoly):
         cmds.select(facePoly[current])
         cmds.select(cmds.polyListComponentConversion(tuv = True), r = True)
         pivots = cmds.polyEditUV( query=True )
-        ptPivotU = (( pivots[0] + pivots[2] + pivots[4] + pivots[6] ) / 4 )
-        ptPivotV = (( pivots[1] + pivots[3] + pivots[5] + pivots[7] ) / 4 )
+        # Storing the odd and even (U and V) indexes in two different lists
+        Ucoord = pivots[0::2]
+        Vcoord = pivots[1::2]
+        ptPivotU = 0
+        ptPivotV = 0
+        counter = 0
+        for i in Ucoord:
+            ptPivotU += Ucoord[counter]
+            ptPivotV += Vcoord[counter]
+            counter += 1
+        ptPivotU /= len(Ucoord)
+        ptPivotV /= len(Vcoord)
         cmds.polyEditUV(scaleU = 0.1, scaleV = 0.1, pivotU = ptPivotU, pivotV = ptPivotV)
         current += 1
 
@@ -248,6 +260,16 @@ def duplicateShader(newMesh):
     cmds.select(newMesh)
     cmds.hyperShade(assign = (stylizedPxrSurface))
     return (stylizedPxrSurface, stylizedShadingGroup)
+
+# Creating a new UVset on which the alpha can be used
+def newUVset(facePoly, newMesh):
+    newUVset = "stylizedUvSet"
+    cmds.select(newMesh)
+    originalUvSet = cmds.polyUVSet(newMesh, query = True, allUVSets = True)
+    cmds.polyUVSet( copy = True, nuv = newUVset, uvSet = originalUvSet[0] )
+    cmds.polyUVSet( currentUVSet = True,  uvSet = newUVset)
+    cmds.select(facePoly)
+    cmds.polyForceUV( unitize = True )
 
 # Creating the OSL node and compiling it using the .osl in the document/maya/scripts directory
 # Then linking the outputRGBR to the presence of the new stylized duplicated shader
