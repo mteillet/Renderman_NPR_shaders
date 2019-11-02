@@ -261,6 +261,7 @@ def duplicateShader(newMesh):
     cmds.hyperShade(assign = (stylizedPxrSurface))
     return (stylizedPxrSurface, stylizedShadingGroup)
 
+# Creating a new UVset on which the alpha can be used
 def newUVset(facePoly, newMesh):
     newUVset = "stylizedUvSet"
     cmds.select(newMesh)
