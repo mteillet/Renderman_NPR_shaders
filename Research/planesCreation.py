@@ -278,7 +278,6 @@ def newUVset(facePoly, newMesh):
 # Then linking the outputRGBR to the presence of the new stylized duplicated shader
 def setUpOSL(stylizedShadingGroup, newMesh):
     # Creating new PxrTexture and PxrManifold2D nodes
-    # Still need to connect the pxrTexture RGBR to the presence of the pxr surface
     newPxrTexture = rfm2.api.nodes.create_node("","PxrTexture")
     newManifold = rfm2.api.nodes.create_node("","PxrManifold2D")
     newPxrTexture = newPxrTexture.split('"')
@@ -287,6 +286,9 @@ def setUpOSL(stylizedShadingGroup, newMesh):
     cmds.connectAttr(((newManifold[1])+".result"), ((newPxrTexture[1])+".manifold"))
     cmds.connectAttr((str(newMesh)+".uvSet[1].uvSetName"), (str(newManifold[1])+".primvarT"))
     cmds.connectAttr((str(newMesh)+".uvSet[1].uvSetName"), (str(newManifold[1])+".primvarS"))
+    # Need to input the image texture into the PxrTexture
+    # Connect the PxrTexture RGBR to the stylized material presence input
+    cmds.connectAttr((str(newPxrTexture[1])+".resultRGB.resultRGBR"), (str(stylizedShadingGroup[0])+".presence"))
 
     
     
