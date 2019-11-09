@@ -2,6 +2,8 @@ import maya.cmds as cmds
 import math
 import pymel.core as pm
 import maya.mel as mel
+import os
+import getpass
 
 ####    Script made and owned by Teillet Martin    ####
 ####    Special thanks to :
@@ -12,32 +14,34 @@ import maya.mel as mel
 ####             Main function               ####
 def main():
     # Get the original selection
-    selectionList = firstSelection()
+    #selectionList = firstSelection()
+    # Copying the brushes to the current Maya Project
+    pathToBrush = copyScriptContents()
     # Duplicate the selection in order to perform stylization on the duplicate
-    newMesh = duplicateMesh(selectionList)
+    #newMesh = duplicateMesh(selectionList)
     # Get the Camera Direction Vector
-    camList = cameraDirVec(selectionList)
+    #camList = cameraDirVec(selectionList)
     # Get the normal vector of every face in the selected geo
-    allPolyReturns = polyNormals(newMesh)
-    faceNormals = allPolyReturns[0]
-    originalFaces = allPolyReturns[1]
+    #allPolyReturns = polyNormals(newMesh)
+    #faceNormals = allPolyReturns[0]
+    #originalFaces = allPolyReturns[1]
     # Gets Compares the vectors using a threshold and returns a list of ints corresponding to indexes of faces under the threshold
-    returnVectors = compareVectors(camList, faceNormals)
-    faceIndexes = returnVectors[0]
-    thresoldRatio = returnVectors[1]
+    #returnVectors = compareVectors(camList, faceNormals)
+    #faceIndexes = returnVectors[0]
+    #thresoldRatio = returnVectors[1]
     # Selects the faces corresponding to the threshold, duplicates them and deletes the original faces
     # Offset and scaling is done in this function
-    createFaces(faceIndexes, newMesh, originalFaces)
+    #createFaces(faceIndexes, newMesh, originalFaces)
     # Orienting the face to the camera direction vector
-    facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
+    #facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
     # Scaling the UV shells
-    scaleUVs(facePoly)
+    #scaleUVs(facePoly)
     # Creating a new UVset
-    newUVset(facePoly, newMesh)
+    #newUVset(facePoly, newMesh)
     # Duplicating the currently assigned shader
-    stylizedShadingGroup = duplicateShader(newMesh)
+    #stylizedShadingGroup = duplicateShader(newMesh)
     # Creating the stylized PxrOSL Node
-    setUpOSL(stylizedShadingGroup)
+    #setUpOSL(stylizedShadingGroup)
 
     
 
@@ -47,6 +51,18 @@ def firstSelection():
     selection = cmds.ls(selection = True)
     cmds.select(clear = True)
     return(selection)
+
+def copyScriptContents():
+    projPath = cmds.workspace(query = True, rootDirectory=True)
+    srcImgPath = str(projPath) + "sourceimages/_scriptDirectory/"
+    documentsPath = os.path.expanduser("~")
+    scripPath = str(documentsPath) + "/maya/2019/scripts/Renderman_NPR_shaders/_Alpha_IMGs"
+    # Creates the folder _scriptDirectory in the sourceimages of the project if the folder does not exist
+    if not os.path.exists(srcImgPath):
+        os.makedirs(srcImgPath)
+    else:
+        print "Script Folder already exists"
+    print (homeDir)
 
 ####            Makes a copy of the original mesh in order to perform stylization on it
 def duplicateMesh(selectionList):
