@@ -4,6 +4,7 @@ import pymel.core as pm
 import maya.mel as mel
 import os
 import getpass
+from shutil import copyfile
 
 ####    Script made and owned by Teillet Martin    ####
 ####    Special thanks to :
@@ -14,34 +15,34 @@ import getpass
 ####             Main function               ####
 def main():
     # Get the original selection
-    #selectionList = firstSelection()
+    selectionList = firstSelection()
     # Copying the brushes to the current Maya Project
-    pathToBrush = copyScriptContents()
+    scriptImgs = copyScriptContents()
     # Duplicate the selection in order to perform stylization on the duplicate
-    #newMesh = duplicateMesh(selectionList)
+    newMesh = duplicateMesh(selectionList)
     # Get the Camera Direction Vector
-    #camList = cameraDirVec(selectionList)
+    camList = cameraDirVec(selectionList)
     # Get the normal vector of every face in the selected geo
-    #allPolyReturns = polyNormals(newMesh)
-    #faceNormals = allPolyReturns[0]
-    #originalFaces = allPolyReturns[1]
+    allPolyReturns = polyNormals(newMesh)
+    faceNormals = allPolyReturns[0]
+    originalFaces = allPolyReturns[1]
     # Gets Compares the vectors using a threshold and returns a list of ints corresponding to indexes of faces under the threshold
-    #returnVectors = compareVectors(camList, faceNormals)
-    #faceIndexes = returnVectors[0]
-    #thresoldRatio = returnVectors[1]
+    returnVectors = compareVectors(camList, faceNormals)
+    faceIndexes = returnVectors[0]
+    thresoldRatio = returnVectors[1]
     # Selects the faces corresponding to the threshold, duplicates them and deletes the original faces
     # Offset and scaling is done in this function
-    #createFaces(faceIndexes, newMesh, originalFaces)
+    createFaces(faceIndexes, newMesh, originalFaces)
     # Orienting the face to the camera direction vector
-    #facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
+    facePoly = orientFaces(faceNormals, camList, newMesh, thresoldRatio)
     # Scaling the UV shells
-    #scaleUVs(facePoly)
+    scaleUVs(facePoly)
     # Creating a new UVset
-    #newUVset(facePoly, newMesh)
+    newUVset(facePoly, newMesh)
     # Duplicating the currently assigned shader
-    #stylizedShadingGroup = duplicateShader(newMesh)
+    stylizedShadingGroup = duplicateShader(newMesh)
     # Creating the stylized PxrOSL Node
-    #setUpOSL(stylizedShadingGroup)
+    setUpOSL(stylizedShadingGroup)
 
     
 
@@ -52,17 +53,31 @@ def firstSelection():
     cmds.select(clear = True)
     return(selection)
 
+####        Checks if the textures of the script exist in the current project, otherwise copy them from the maya scripts directory
 def copyScriptContents():
+    imgName = "Alpha_002.bruch_CC0.png"
+    texName = str(imgName) + ".tex"
     projPath = cmds.workspace(query = True, rootDirectory=True)
-    srcImgPath = str(projPath) + "sourceimages/_scriptDirectory/"
+    srcFolderPath = str(projPath) + "sourceimages/_scriptDirectory/"
     documentsPath = os.path.expanduser("~")
-    scripPath = str(documentsPath) + "/maya/2019/scripts/Renderman_NPR_shaders/_Alpha_IMGs"
+    scriptPath = str(documentsPath) + "/maya/2019/scripts/Renderman_NPR_shaders/_Alpha_IMGs/"
+    imgPath = str(srcFolderPath) + str(imgName)
+    texPath = str(srcFolderPath) + str(texName)
+    srcImgPath = str(scriptPath) + str(imgName)
+    srcTexPath = str(scriptPath) + str(texName)
     # Creates the folder _scriptDirectory in the sourceimages of the project if the folder does not exist
-    if not os.path.exists(srcImgPath):
-        os.makedirs(srcImgPath)
+    if not os.path.exists(srcFolderPath):
+        os.makedirs(srcFolderPath)
     else:
-        print "Script Folder already exists"
-    print (homeDir)
+        print ("Script Folder already exists")
+    # Check if the brush png and tex exists, otherwise copy them to the current maya project
+    if not os.path.exists(imgPath):
+        copyfile(srcImgPath, imgPath)
+        copyfile(srcTexPath, texPath)
+    else:
+        print("Brush Textures were already copied to project")
+    print ("Brushes copied to the current maya project: " + str(projPath))
+    return(imgPath, texPath)
 
 ####            Makes a copy of the original mesh in order to perform stylization on it
 def duplicateMesh(selectionList):
