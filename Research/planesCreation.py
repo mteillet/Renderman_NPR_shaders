@@ -2,6 +2,9 @@ import maya.cmds as cmds
 import math
 import pymel.core as pm
 import maya.mel as mel
+import os
+import getpass
+from shutil import copyfile
 
 ####    Script made and owned by Teillet Martin    ####
 ####    Special thanks to :
@@ -13,6 +16,8 @@ import maya.mel as mel
 def main():
     # Get the original selection
     selectionList = firstSelection()
+    # Copying the brushes to the current Maya Project
+    scriptImgs = copyScriptContents()
     # Duplicate the selection in order to perform stylization on the duplicate
     newMesh = duplicateMesh(selectionList)
     # Get the Camera Direction Vector
@@ -47,6 +52,32 @@ def firstSelection():
     selection = cmds.ls(selection = True)
     cmds.select(clear = True)
     return(selection)
+
+####        Checks if the textures of the script exist in the current project, otherwise copy them from the maya scripts directory
+def copyScriptContents():
+    imgName = "Alpha_002.bruch_CC0.png"
+    texName = str(imgName) + ".tex"
+    projPath = cmds.workspace(query = True, rootDirectory=True)
+    srcFolderPath = str(projPath) + "sourceimages/_scriptDirectory/"
+    documentsPath = os.path.expanduser("~")
+    scriptPath = str(documentsPath) + "/maya/2019/scripts/Renderman_NPR_shaders/_Alpha_IMGs/"
+    imgPath = str(srcFolderPath) + str(imgName)
+    texPath = str(srcFolderPath) + str(texName)
+    srcImgPath = str(scriptPath) + str(imgName)
+    srcTexPath = str(scriptPath) + str(texName)
+    # Creates the folder _scriptDirectory in the sourceimages of the project if the folder does not exist
+    if not os.path.exists(srcFolderPath):
+        os.makedirs(srcFolderPath)
+    else:
+        print ("Script Folder already exists")
+    # Check if the brush png and tex exists, otherwise copy them to the current maya project
+    if not os.path.exists(imgPath):
+        copyfile(srcImgPath, imgPath)
+        copyfile(srcTexPath, texPath)
+    else:
+        print("Brush Textures were already copied to project")
+    print ("Brushes copied to the current maya project: " + str(projPath))
+    return(imgPath, texPath)
 
 ####            Makes a copy of the original mesh in order to perform stylization on it
 def duplicateMesh(selectionList):
