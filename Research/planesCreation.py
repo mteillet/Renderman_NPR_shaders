@@ -2,6 +2,7 @@ import maya.cmds as cmds
 import math
 import pymel.core as pm
 import maya.mel as mel
+import rfm2
 import os
 import getpass
 from shutil import copyfile
@@ -42,7 +43,7 @@ def main():
     # Duplicating the currently assigned shader
     stylizedShadingGroup = duplicateShader(newMesh)
     # Creating the stylized PxrOSL Node
-    setUpOSL(stylizedShadingGroup)
+    setUpOSL(stylizedShadingGroup, newMesh)
 
     
 
@@ -153,8 +154,6 @@ def compareVectors(camList, faceNormals):
     thresholdPercentage = []
     
     ####    Function
-    print(camList)
-    print(faceNormals[1])
     current = 0
     for i in faceNormals:
         x = camList[0] * float(faceNormals[current][0])
@@ -282,10 +281,10 @@ def scaleUVs(facePoly):
 # Duplicating, renaming and assigning the new shader to the stylized mesh
 def duplicateShader(newMesh):
     cmds.select(newMesh)
-    # Get the shader currently applied
+    # Get the shading Engine
     originalShader = cmds.listConnections(cmds.listHistory(newMesh), type = 'shadingEngine')
-    cmds.select(originalShader)
-    newShader = pm.duplicate(originalShader, un=True)
+    cmds.select(clear = True)
+    newShader = pm.duplicate(originalShader, upstreamNodes=True)
     cmds.select(newShader)
     # Setting new string for new shading group and PxrSurface name
     newShadgingGroup = ((str(newShader[0])) + "_STYLIZED")
@@ -308,11 +307,21 @@ def newUVset(facePoly, newMesh):
 
 # Creating the OSL node and compiling it using the .osl in the document/maya/scripts directory
 # Then linking the outputRGBR to the presence of the new stylized duplicated shader
-def setUpOSL(stylizedShadingGroup):
-    newNode = mel.eval('hyperShadePanelCreate "otherTexture" PxrOSL;')
-    oslNode = cmds.rename(str(newNode), "stylizedOSL_#")
-    # Now need to create the actual osl shader, and compile it as an oso, in order to compile it into the node before plugin it into the PxrSurface
-    # Might need a new UV map layer and use a Unitize UV (in UV>Modify Menu)
+def setUpOSL(stylizedShadingGroup, newMesh):
+    # Creating new PxrTexture and PxrManifold2D nodes
+    newPxrTexture = rfm2.api.nodes.create_node("","PxrTexture")
+    newManifold = rfm2.api.nodes.create_node("","PxrManifold2D")
+    newPxrTexture = newPxrTexture.split('"')
+    newManifold = newManifold.split('"')
+    # Connecting the manifold to the PxrTexture and the UVset[1] name to the PxrMAnifold.primvarS/T
+    cmds.connectAttr(((newManifold[1])+".result"), ((newPxrTexture[1])+".manifold"))
+    cmds.connectAttr((str(newMesh)+".uvSet[1].uvSetName"), (str(newManifold[1])+".primvarT"))
+    cmds.connectAttr((str(newMesh)+".uvSet[1].uvSetName"), (str(newManifold[1])+".primvarS"))
+    # Need to input the image texture into the PxrTexture
+    # Connect the PxrTexture RGBR to the stylized material presence input
+    cmds.connectAttr((str(newPxrTexture[1])+".resultRGB.resultRGBR"), (str(stylizedShadingGroup[0])+".presence"))
 
+    
+    
 if __name__ == '__main__':
     main()
