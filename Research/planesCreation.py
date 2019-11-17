@@ -43,7 +43,7 @@ def main():
     # Duplicating the currently assigned shader
     stylizedShadingGroup = duplicateShader(newMesh)
     # Creating the stylized PxrOSL Node
-    setUpOSL(stylizedShadingGroup, newMesh)
+    setUpOSL(stylizedShadingGroup, newMesh, scriptImgs)
 
     
 
@@ -174,7 +174,7 @@ def compareVectors(camList, faceNormals):
 def createFaces(faceIndexes, newMesh, originalFaces):
     cmds.select(newMesh)
     ####    Variables
-    translateZ = 0
+    translateZ = .1
     scale = 1.5
     ####    Function
     current = 0
@@ -307,7 +307,7 @@ def newUVset(facePoly, newMesh):
 
 # Creating the OSL node and compiling it using the .osl in the document/maya/scripts directory
 # Then linking the outputRGBR to the presence of the new stylized duplicated shader
-def setUpOSL(stylizedShadingGroup, newMesh):
+def setUpOSL(stylizedShadingGroup, newMesh, scriptImgs):
     # Creating new PxrTexture and PxrManifold2D nodes
     newPxrTexture = rfm2.api.nodes.create_node("","PxrTexture")
     newManifold = rfm2.api.nodes.create_node("","PxrManifold2D")
@@ -315,13 +315,12 @@ def setUpOSL(stylizedShadingGroup, newMesh):
     newManifold = newManifold.split('"')
     # Connecting the manifold to the PxrTexture and the UVset[1] name to the PxrMAnifold.primvarS/T
     cmds.connectAttr(((newManifold[1])+".result"), ((newPxrTexture[1])+".manifold"))
-    cmds.connectAttr((str(newMesh)+".uvSet[1].uvSetName"), (str(newManifold[1])+".primvarT"))
     cmds.connectAttr((str(newMesh)+".uvSet[1].uvSetName"), (str(newManifold[1])+".primvarS"))
-    # Need to input the image texture into the PxrTexture
     # Connect the PxrTexture RGBR to the stylized material presence input
     cmds.connectAttr((str(newPxrTexture[1])+".resultRGB.resultRGBR"), (str(stylizedShadingGroup[0])+".presence"))
+    # Connects the .tex to the pxrTexture filename
+    cmds.setAttr((str(newPxrTexture[1]) + ".filename"), str(scriptImgs[1]), type = "string")
 
-    
     
 if __name__ == '__main__':
     main()
