@@ -164,7 +164,7 @@ def compareVectors(camList, faceNormals):
     thresholdIndexes = []
     current = 0
     for i in productNormal:
-        if math.sqrt((productNormal[current])*(productNormal[current])) < threshold:
+        if math.sqrt((productNormal[current])*(productNormal[current]))-10 < threshold:
             thresholdIndexes.append(current)
             thresholdPercentage.append(productNormal[current])
         current += 1
